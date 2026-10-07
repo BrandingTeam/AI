@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Media Studio V150</title>
+<title>Media Studio V151</title>
 <style>
 :root{--bg:#090b0f;--side:#0d1015;--panel:#11151b;--line:#28313d;--muted:#8995a6;--text:#f7f9fc;--accent:#dfff69}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans KR",sans-serif;height:100vh;overflow:hidden}
@@ -376,13 +376,16 @@ body{overflow:hidden!important}
       <div class="promptForm">
         <h2>이미지 제작 프롬프트</h2>
         <label>이미지 사이즈</label><div class="sizePresets" id="p1presets"><button type="button" data-size="1080x1080">1080×1080</button><button type="button" data-size="1080x1920">1080×1920</button><button type="button" class="active" data-size="1080x1350">1080×1350</button><button type="button" data-size="1280x720">1280×720</button><button type="button" data-size="1920x1080">1920×1080</button><button type="button" data-size="custom">CUSTOM</button></div><div class="fieldGrid two"><label>이미지 가로<input id="p1w" class="numField" type="text" inputmode="numeric" pattern="[0-9]*" value="1080"></label><label>이미지 세로<input id="p1h" class="numField" type="text" inputmode="numeric" pattern="[0-9]*" value="1350"></label></div>
-        <div class="fieldGrid two"><div><span class="fieldLabel">메인 키칼라</span><div class="colorGradRow"><input id="p1main" class="textInput" placeholder="예: 보라색 / #7C4DFF"><label class="checkLine"><input id="p1gradient" type="checkbox"> 그라데이션</label></div></div><label>배경 톤<select id="p1bgTone"><option value="밝게">밝게</option><option value="어둡게" selected>어둡게</option></select></label></div>
+        <div class="fieldGrid two"><div><span class="fieldLabel">메인 키칼라</span><div class="colorGradRow"><input id="p1main" class="textInput" placeholder="예: 보라색 / #7C4DFF"><label class="checkLine"><input id="p1gradient" type="checkbox"> 그라데이션</label></div></div><div><span class="fieldLabel">배경 키칼라</span><div class="colorGradRow"><input id="p1bgColor" class="textInput" placeholder="예: 짙은 남색 / #101828"><label class="checkLine"><input id="p1bgGradient" type="checkbox" checked> 그라데이션</label></div></div></div>
+        <label>박스 코너 스타일<select id="p1boxStyle"><option value="둥근" selected>둥근 (라운드 박스)</option><option value="각진">각진 (직각 박스)</option><option value="자율">AI 자율 판단</option></select></label>
         <div class="fieldGrid two"><label>제목 폰트<input id="p1titleFont" class="textInput" placeholder="예: MBC 1961 M"></label><label>내용 폰트<input id="p1bodyFont" class="textInput" placeholder="예: Pretendard"></label></div>
         <div class="optionalBox"><b>선택 폰트</b>
           <label>숫자 폰트<input id="p1numFont" class="textInput" placeholder="선택사항"></label><label class="checkLine"><input id="p1numTitle" type="checkbox"> 제목의 숫자에도 적용</label>
           <label>영문 폰트<input id="p1engFont" class="textInput" placeholder="선택사항"></label><label class="checkLine"><input id="p1engTitle" type="checkbox"> 제목의 영문에도 적용</label>
         </div>
         <div class="repeatHead"><b>리소스</b><button type="button" class="addRowBtn" id="p1addRes">＋ 리소스 추가</button></div><div id="p1resources" class="repeatList"><div class="repeatRow"><select class="resType"><option>이미지</option><option>텍스트</option></select><input class="resName" placeholder="리소스 명칭 / 텍스트 내용"><input class="resCount numField" type="text" inputmode="numeric" pattern="[0-9]*" value="1"><label class="resRole"><input class="resBg" type="checkbox"> 배경</label><label class="resRole"><input class="resBody" type="checkbox" checked> 본문</label><button type="button" class="removeRow">×</button></div></div>
+        <label>디자인 목적 <em>선택</em><input id="p1purpose" class="textInput" placeholder="예: 드롭스 보상 안내와 참여 방법 / 비우면 내용에서 자동 기획"></label>
+        <label>정식 타이틀 <em>선택</em><input id="p1title" class="textInput" placeholder="예: 드롭스 이벤트 / 비우면 내용에서 자동 기획"></label>
         <label>내용 / 필요한 이미지 설명<textarea id="p1content" rows="7" placeholder="어떤 이미지가 필요한지 자세히 입력"></textarea></label>
       </div>
       <div class="promptResult"><div class="resultHead"><b>생성된 프롬프트</b><button class="copyBtn" data-copy="p1out">복사</button></div><textarea id="p1out" readonly></textarea></div>
@@ -735,7 +738,11 @@ function fontRules(prefix){
  return a;
 }
 function buildP1(){
- const p1W=pv('p1w')||1080, p1H=pv('p1h')||1350, p1Tone=pv('p1bgTone')||'어둡게';
+ const p1W=pv('p1w')||1080, p1H=pv('p1h')||1350;
+ const p1Bg=pv('p1bgColor'), p1BgGrad=pc('p1bgGradient');
+ const p1Box=pv('p1boxStyle')||'둥근';
+ const p1Purpose=pv('p1purpose'), p1Title=pv('p1title');
+ const p1Radius=Math.max(8,Math.round(Math.min(Number(p1W)||1080,Number(p1H)||1350)*0.025));
  const p1Short=Math.max(1,Math.min(Number(p1W)||1080,Number(p1H)||1350));
 let a=['[출력 형식 — 작업 시작 전에 먼저 확인]',
  '답변에는 <!doctype html> 로 시작해서 </html> 로 끝나는 HTML 코드 하나만 출력할 것. 이 프롬프트의 문장(요청 조건, 판단 사항, 체크리스트, ZONE 설명 등)을 코드 앞이나 뒤에 다시 옮겨 적지 말 것. 저장되는 .html 파일의 첫 글자는 반드시 "<" 여야 하며, 코드 앞에 한 줄이라도 설명 문장이 들어가면 브라우저가 그 글자를 페이지 본문으로 표시해 편집기 위에 텍스트가 잔뜩 깔리는 실패한 결과물이 된다. 상세 규칙은 맨 아래 [최종 출력 규칙] 참고.',
@@ -743,7 +750,7 @@ let a=['[출력 형식 — 작업 시작 전에 먼저 확인]',
  `아래 조건에 맞는 이미지 소스를 제작할 수 있는 편집 사이트(HTML)를 만들어줘. 편집기 자체의 기능(레이어 시스템·드래그/리사이즈·PNG/PSD 저장·히스토리·폰트 로딩·색상 그라데이션·200종 도형 라이브러리·외곽선·블렌드 모드·클리핑 마스크·캔버스 툴바 등)은 전부 이 프롬프트 맨 아래에 첨부된 [고정 구현 엔진 코드]에 이미 완성되어 있으니, 그 코드를 그대로 사용하고 절대 새로 구현하지 말 것.`,'','[AI가 직접 판단해서 반영해야 하는 디자인 사항 — 아래는 코드가 대신 해주지 않는 것들]',
  `1. (사이즈) 캔버스는 가로 ${p1W} x 세로 ${p1H} (이미 하단 [고정 구현 엔진 코드]에 이 값으로 치환되어 있음. 참고만 할 것).`,
  '2. (레이아웃) 아래 [필요한 이미지 / 내용]과 [리소스] 구성을 분석해서, 핵심 내용이 가장 효과적으로 전달되는 배치/구도/우선순위로 레이아웃(각 레이어의 x/y/w/h)을 구성할 것. 리소스 개수·역할(배경/본문)에 맞춰 여백과 크기 비중을 조정할 것.',
- `3. (배경 톤 대응) 배경 톤이 "${p1Tone}"인 것을 고려해서, 제목·본문 등 모든 텍스트가 배경 위에서 선명하게 보이도록 글자 색상(필요 시 그림자/외곽선 등)을 판단해 적용할 것.`,
+ `3. (배경 색상) 배경 키칼라는 ${p1Bg?`"${p1Bg}"`:'지정되지 않음(내용과 메인 키칼라에 어울리는 배경색을 직접 판단해서 정할 것)'}이고, 배경 그라데이션 사용 여부는 "${p1BgGrad?'ON (사용)':'OFF (미사용)'}"임. ${p1BgGrad?'ON이므로 배경 키칼라와 같은 계열(톤온톤)로 자연스럽게 이어지는 두 색을 잡아 그라데이션 배경을 깔 것. 단 background 타입 레이어는 단색만 지원하므로, 배경 레이어 바로 위에 캔버스 전체를 덮는 square 도형 레이어(x:0, y:0, w:'+p1W+', h:'+p1H+')를 두고 gradient:true / grad1 / grad2 / gradientAngle(0~360)로 구현할 것.':'OFF이므로 background 레이어의 color만 단색으로 쓰고 배경에 그라데이션 레이어를 추가하지 말 것.'} 어느 쪽이든 제목·본문 등 모든 텍스트가 배경 위에서 선명하게 보이도록 글자 색상(필요 시 그림자/외곽선 등)을 판단해 적용할 것.`,
  '4. (텍스트 겹침 방지) 본문/메인에 들어가는 텍스트 요소들이 서로 겹쳐 가려지지 않도록 위치·영역을 배치할 것.',
  '5. (로고 색상 처리) 로고 등 이미지 리소스가 검정/흰색(무채색)만으로 표현되어 있고 배경과 명도 대비가 낮아 잘 보이지 않는 경우에만 그 image 레이어에 invert:true를 지정할 것. 다른 색상이 포함된 로고는 원본 그대로(invert:false) 사용할 것.',
  '6. (자율 기획 요소) 입력된 텍스트·리소스 외에도, 핵심 내용을 더 효과적으로 전달하기 위해 필요한 보조 텍스트나 장식 요소(그라데이션/라인/도형/그리드 등)가 있다면 자율적으로 기획해서 추가할 것.',
@@ -754,10 +761,13 @@ let a=['[출력 형식 — 작업 시작 전에 먼저 확인]',
  '11. (외곽선 활용) 텍스트/이미지/도형/라인/그래프 레이어에 strokeWidth(1~60px)·stroke("#rrggbb")·strokeJoin("round"|"square")로 외곽선을 줄 수 있음. 사진이나 복잡한 배경 위에 글자·아이콘이 올라가 색상 대비만으로는 가독성이 부족하다고 판단되면 배경과 반대 명도의 얇은 외곽선을 넣고, 스티커·캐릭터풍 표현이 필요할 때도 활용할 것. 어두운 단색 배경처럼 이미 충분히 잘 보이는 경우에는 넣지 말 것.',
  '12. (블렌드 모드 활용) 배경을 제외한 모든 레이어에 blend(멀티플라이/스크린/오버레이/소프트라이트 등 16종)를 지정할 수 있음. 광원·글로우·빛 번짐은 screen 또는 lighten, 그림자·거친 텍스처는 multiply, 사진 위 대비 강화는 overlay/soft-light 처럼 필요한 경우에만 의도적으로 지정하고, 일반 적층이면 필드를 넣지 말 것.',
  `13. (텍스트 가독 크기) 폰트가 너무 작아서 안 보이는 일이 없도록 할 것. 캔버스 짧은 변(${p1Short}px) 기준으로 제목은 짧은 변의 6% 이상(약 ${Math.round(p1Short*0.06)}px 이상), 본문·설명 텍스트는 2.2% 이상(최소 ${Math.max(20,Math.round(p1Short*0.022))}px), 캡션·주석·라벨 등 가장 작은 텍스트도 1.7% 이상(최소 ${Math.max(16,Math.round(p1Short*0.017))}px)으로 잡고, 이보다 작은 fontSize는 쓰지 말 것. 텍스트 박스(w/h)는 fontSize에 맞춰 충분히 크게 잡아서 줄이 넘쳐 잘리지 않게 하고, 내용이 길어 공간이 부족하면 폰트를 줄이기보다 문구를 줄이거나 배치를 다시 잡을 것.`,
+ `14. (박스 코너 스타일) 카드/버튼/배지/정보 박스 등 사각형 박스 요소의 코너 처리는 "${p1Box}" 스타일로 통일할 것. ${p1Box==='둥근'?'둥근 스타일이므로 square 도형 레이어에 radius를 지정하고(기본값으로 약 '+p1Radius+'px, 작은 배지는 더 작게, 큰 패널은 조금 더 크게), 모든 박스가 비슷한 라운드 값을 쓰도록 맞출 것. 둥근 느낌을 유지하기 위해 도형을 고를 때도 triangle-round/arrow-round/star-round 같은 라운드 계열 키를 우선 쓸 것.':(p1Box==='각진'?'각진 스타일이므로 박스에 radius를 넣지 말 것(0 또는 필드 자체를 생략). 날카로운 인상을 위해 도형도 라운드 계열이 아닌 기본 키(triangle, arrow, star 등)를 쓰고, 코너 장식이 필요하면 corner-tr/corner-br 같은 직각 코너 요소를 활용할 것.':'자율 판단이므로 내용의 성격과 톤에 맞춰 각진/둥근 중 하나를 고르고, 한 이미지 안에서는 그 선택을 일관되게 유지할 것(일부만 둥글게 섞지 말 것).')}`,
  '','[디자인 조건]'];
  const design=[];
  if(pv('p1main'))design.push(`메인 키칼라: ${pv('p1main')}${pc('p1gradient')?' (그라데이션 사용)':''}`);
- if(pv('p1bgTone'))design.push(`배경 톤: ${pv('p1bgTone')}`);
+ if(p1Bg)design.push(`배경 키칼라: ${p1Bg}${p1BgGrad?' (그라데이션 사용)':' (단색)'}`);
+ else design.push(`배경 키칼라: 미지정 (AI가 판단)${p1BgGrad?' / 그라데이션 사용':' / 단색'}`);
+ design.push(`박스 코너 스타일: ${p1Box}`);
  if(pv('p1titleFont'))design.push(`제목 폰트: ${pv('p1titleFont')}`);
  if(pv('p1bodyFont'))design.push(`본문 폰트: ${pv('p1bodyFont')}`);
  if(pv('p1numFont'))design.push(`숫자 폰트: ${pv('p1numFont')}${$('#p1numTitle')?.checked?' / 제목 속 숫자에도 적용':''}`);
@@ -768,6 +778,10 @@ let a=['[출력 형식 — 작업 시작 전에 먼저 확인]',
    let roles=[];if(r.bg)roles.push('배경');if(r.body)roles.push('본문/메인');
    if(r.name||r.type)a.push(`${i+1}. ${r.type}: ${r.name}${r.type==='이미지'?' '+r.count+'개':''} / 사용처: ${roles.join(' + ')||'미지정'}`);
  });
+ a.push('','[디자인 목적]');
+ a.push(p1Purpose || '별도로 지정하지 않음 — 아래 [필요한 이미지 / 내용]을 분석해서 이 이미지가 달성해야 할 목적(무엇을 알리고, 보는 사람이 무엇을 하게 만들 것인지)을 직접 정의한 뒤, 그 목적에 맞춰 정보 우선순위·강조 대상·레이아웃을 결정할 것.');
+ a.push('','[정식 타이틀]');
+ a.push(p1Title || '지정하지 않음 — 아래 [필요한 이미지 / 내용]을 분석해서 가장 적합한 정식 타이틀(대표 제목 문구)을 직접 기획해 쓸 것. 타이틀은 캔버스에서 가장 강한 시각 위계를 갖도록 크기·굵기·위치를 잡을 것.');
  a.push('','[필요한 이미지 / 내용]');
  if(pv('p1content'))a.push(pv('p1content'));
  a.push('','[디자인 점검 체크리스트]','완성 전에 아래 항목만 다시 확인할 것(레이어/드래그/저장/히스토리 등 기능 자체는 하단 [고정 구현 엔진 코드]가 이미 보장하므로 재확인 불필요).',
@@ -781,7 +795,10 @@ let a=['[출력 형식 — 작업 시작 전에 먼저 확인]',
  '8) 외곽선(strokeWidth/stroke)을 쓴 경우 두께가 과해 글자 속이 뭉개지지 않는지, 안 쓴 경우 배경 위 텍스트·아이콘이 대비만으로 충분히 읽히는지.',
  '9) 블렌드 모드(blend)를 쓴 레이어가 의도한 대로 밝아지거나 어두워졌는지, 배경 톤과 겹쳐 내용이 사라지지 않았는지.',
  '10) 이미지 레이어는 박스 안에 원본 비율로 맞춰 들어가므로(contain), 박스 비율이 원본과 크게 달라 불필요한 빈 공간이 생기지 않았는지.',
- '11) 모든 텍스트의 fontSize가 위 기준 최소값 이상인지(특히 캡션·라벨·수치 단위처럼 작게 들어가는 텍스트), 그리고 텍스트 박스가 좁아 글자가 잘리거나 넘치지 않는지.');
+ '11) 모든 텍스트의 fontSize가 위 기준 최소값 이상인지(특히 캡션·라벨·수치 단위처럼 작게 들어가는 텍스트), 그리고 텍스트 박스가 좁아 글자가 잘리거나 넘치지 않는지.',
+ '12) 박스 요소의 코너 처리가 지정한 스타일(각진/둥근)로 일관되게 적용됐는지(일부만 둥근 박스가 섞이지 않았는지).',
+ '13) 배경이 지정한 키칼라/그라데이션 여부대로 구성됐는지, 그라데이션 ON이면 캔버스를 덮는 도형 레이어에 grad1/grad2/gradientAngle이 실제로 들어갔는지.',
+ '14) [디자인 목적]과 [정식 타이틀]이 비어 있어 직접 기획한 경우, 그 목적이 레이아웃·강조 우선순위에 실제로 반영됐고 타이틀이 가장 눈에 띄는 위계를 갖는지.');
  a.push('', buildFixedEngineBlock(p1W, p1H, (rs[0]&&rs[0].name) || 'MEDIA_STUDIO_IMAGE'));
  return a.join('\n')
 }
